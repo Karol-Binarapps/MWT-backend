@@ -1,24 +1,20 @@
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
-import * as express from 'express';
-import * as functions from 'firebase-functions';
+import { AppModule } from './app/app.module';
 
-import { AppModule } from './app.module';
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService = app.get(ConfigService);
+  const logger = new Logger('Bootstrap');
 
-const expressServer = express();
+  const port = configService.get<number>('app.port') || 3000;
 
-const createFunction = async (
-  expressInstance: express.Express,
-): Promise<void> => {
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(expressInstance),
-  );
-  await app.init();
-};
+  app.setGlobalPrefix('api');
 
-export const api = functions.https.onRequest(async (request, response) => {
-  await createFunction(expressServer);
-  expressServer(request, response);
-});
+  await app.listen(port);
+  logger.log(`Application is running on port: ${port}`);
+}
+bootstrap();
