@@ -1,7 +1,7 @@
 {
-  "name": "MWT-backend",
+  "name": "mwt-backend",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "workspaces": [
     "apps/*",
@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build:backend": "yarn workspace backend build",
-    "start:backend": "yarn workspace backend start",
+    "start:backend": "yarn workspace backend start:prod",
     "dev:backend": "yarn workspace backend start:dev"
   }
 }

@@ -10,18 +10,21 @@ export class GamesService {
   constructor(@InjectModel('Game') private readonly gameModel: Model<Game>) {}
 
   async getAll(): Promise<Game[]> {
-    return this.gameModel.find().populate('players').exec();
+    return this.gameModel.find().populate('players.user').exec();
   }
 
   async getById(id: string): Promise<Game | null> {
-    return this.gameModel.findById(id).populate('players').exec();
+    return this.gameModel.findById(id).populate('players.user').exec();
   }
 
   async create(gameData: Partial<Game>): Promise<Game> {
+    const pin = await this.ensureUniquePin(gameData.codeToJoin);
+
     const newGame = new this.gameModel({
       createdAt: Date.now(),
       isGameStarted: false,
       ...gameData,
+      codeToJoin: pin,
     });
     return newGame.save();
   }
@@ -46,9 +49,26 @@ export class GamesService {
       .exec();
   }
 
-  async addPlayer(id: string, playerId: string): Promise<Game | null> {
+  async joinGame(playerId: string, codeToJoin: string): Promise<Game | null> {
     return this.gameModel
-      .findByIdAndUpdate(id, { $push: { players: playerId } }, { new: true })
+      .findOneAndUpdate(
+        {
+          codeToJoin: codeToJoin.toUpperCase(),
+          'players.user': { $ne: playerId },
+        },
+        { $addToSet: { players: { user: playerId, status: 'inactive' } } },
+        { new: true },
+      )
+      .exec();
+  }
+
+  async activatePlayer(gameId: string, playerId: string): Promise<Game | null> {
+    return this.gameModel
+      .findOneAndUpdate(
+        { _id: gameId, 'players.user': playerId },
+        { $set: { 'players.$.status': 'active' } },
+        { new: true },
+      )
       .exec();
   }
 
@@ -89,5 +109,25 @@ export class GamesService {
 
     return gameWithPlayerStats;
     // return game;
+  }
+
+  private generatePin(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  private async ensureUniquePin(proposedCode?: string): Promise<string> {
+    let codeToJoin = proposedCode?.toUpperCase() || this.generatePin();
+    let isUnique = false;
+
+    while (!isUnique) {
+      const existingGame = await this.gameModel.findOne({ codeToJoin }).exec();
+      if (!existingGame) {
+        isUnique = true;
+      } else {
+        codeToJoin = this.generatePin();
+      }
+    }
+
+    return codeToJoin;
   }
 }

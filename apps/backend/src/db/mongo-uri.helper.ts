@@ -9,5 +9,5 @@ export const getMongoUri = (configService: ConfigService): string => {
 
   const auth = user && password ? `${user}:${password}@` : '';
 
-  return `mongodb://${auth}${host}:${port}/${database}`;
+  return `mongodb://${auth}${host}:${port}/${database}?authSource=admin`;
 };

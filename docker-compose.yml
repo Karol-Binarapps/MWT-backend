@@ -1,8 +1,7 @@
-version: "3.8"
 services:
   mongo:
     image: mongo:latest
-    container_name: mongodbtest
+    container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
@@ -10,6 +9,20 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+    container_name: backend
+    environment:
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_HOST: mongo
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      - mongo
 
 volumes:
   mongo-data:

@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
 } from '@nestjs/common';
 
 import { GamesService } from './games.service';
@@ -28,6 +29,13 @@ export class GamesController {
   @Post()
   async create(@Body() gameData: Partial<Game>): Promise<Game> {
     return this.gamesService.create(gameData);
+  }
+
+  @Post('/join')
+  async addPlayer(
+    @Body() body: { playerId: string; codeToJoin: string },
+  ): Promise<Game | null> {
+    return this.gamesService.joinGame(body.playerId, body.codeToJoin);
   }
 
   @Put('/:id')
@@ -53,16 +61,16 @@ export class GamesController {
     return this.gamesService.endGame(id);
   }
 
-  @Put('/:id/add-player')
-  async addPlayer(
-    @Param('id') id: string,
-    @Body('playerId') playerId: string,
-  ): Promise<Game | null> {
-    return this.gamesService.addPlayer(id, playerId);
-  }
-
   @Get('/:id/player-stats')
   async getGameWithPlayerStats(@Param('id') id: string): Promise<any> {
     return this.gamesService.getGameWithPlayerStats(id);
+  }
+
+  @Patch('/:id/activate-player/:playerId')
+  async activatePlayer(
+    @Param('id') gameId: string,
+    @Param('playerId') playerId: string,
+  ): Promise<Game | null> {
+    return this.gamesService.activatePlayer(gameId, playerId);
   }
 }
